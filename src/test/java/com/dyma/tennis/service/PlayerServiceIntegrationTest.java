@@ -4,10 +4,11 @@ import com.dyma.tennis.model.Player;
 import com.dyma.tennis.model.PlayerToSave;
 import org.assertj.core.api.Assertions;
 import org.assertj.core.groups.Tuple;
+import org.flywaydb.core.Flyway;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.annotation.DirtiesContext;
 
 import java.time.LocalDate;
 import java.time.Month;
@@ -16,11 +17,16 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @SpringBootTest
-@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 public class PlayerServiceIntegrationTest {
 
     @Autowired
     private PlayerService playerService;
+
+    @BeforeEach
+    void clearDatabase(@Autowired Flyway flyway) {
+        flyway.clean();
+        flyway.migrate();
+    }
 
     @Test
     public void shouldCreatePlayer() {
