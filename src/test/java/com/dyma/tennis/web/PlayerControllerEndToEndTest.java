@@ -8,9 +8,9 @@ import org.flywaydb.core.Flyway;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.resttestclient.TestRestTemplate;
+import org.springframework.boot.resttestclient.autoconfigure.AutoConfigureTestRestTemplate;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.web.client.TestRestTemplate;
-import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
@@ -24,10 +24,8 @@ import java.util.List;
 
 @ActiveProfiles("test")
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@AutoConfigureTestRestTemplate
 public class PlayerControllerEndToEndTest {
-
-    @LocalServerPort
-    private int port;
 
     @Autowired
     private TestRestTemplate restTemplate;
@@ -49,9 +47,11 @@ public class PlayerControllerEndToEndTest {
         );
 
         // When
-        String url = "http://localhost:" + port + "/players";
-        HttpEntity<PlayerToSave> request = new HttpEntity<>(playerToCreate);
-        ResponseEntity<Player> playerResponseEntity = this.restTemplate.exchange(url, HttpMethod.POST, request, Player.class);
+        ResponseEntity<Player> playerResponseEntity = restTemplate.postForEntity(
+                "/players",
+                playerToCreate,
+                Player.class
+        );
 
         // Then
         Assertions.assertThat(playerResponseEntity.getBody().lastName()).isEqualTo("Alcaraz");
@@ -69,9 +69,11 @@ public class PlayerControllerEndToEndTest {
         );
 
         // When
-        String url = "http://localhost:" + port + "/players";
-        HttpEntity<PlayerToSave> request = new HttpEntity<>(playerToCreate);
-        ResponseEntity<Player> playerResponseEntity = this.restTemplate.exchange(url, HttpMethod.POST, request, Player.class);
+        ResponseEntity<Player> playerResponseEntity = restTemplate.postForEntity(
+                "/players",
+                playerToCreate,
+                Player.class
+        );
 
         // Then
         Assertions.assertThat(playerResponseEntity.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
@@ -88,9 +90,13 @@ public class PlayerControllerEndToEndTest {
         );
 
         // When
-        String url = "http://localhost:" + port + "/players";
         HttpEntity<PlayerToSave> request = new HttpEntity<>(playerToUpdate);
-        ResponseEntity<Player> playerResponseEntity = this.restTemplate.exchange(url, HttpMethod.PUT, request, Player.class);
+        ResponseEntity<Player> playerResponseEntity = restTemplate.exchange(
+                "/players",
+                HttpMethod.PUT,
+                request,
+                Player.class
+        );
 
         // Then
         Assertions.assertThat(playerResponseEntity.getBody().lastName()).isEqualTo("NadalTest");
@@ -100,10 +106,10 @@ public class PlayerControllerEndToEndTest {
     @Test
     public void shouldDeletePlayer() {
         // Given / When
-        String url = "http://localhost:" + port + "/players";
-        this.restTemplate.exchange(url + "/djokovictest", HttpMethod.DELETE, null, Player.class);
-        HttpEntity<List<Player>> allPlayersResponseEntity = this.restTemplate.exchange(
-                url,
+        restTemplate.delete("/players/djokovictest");
+
+        ResponseEntity<List<Player>> allPlayersResponseEntity = restTemplate.exchange(
+                "/players",
                 HttpMethod.GET,
                 null,
                 new ParameterizedTypeReference<List<Player>>() {
